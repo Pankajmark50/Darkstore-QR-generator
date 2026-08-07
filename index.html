@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blinkit Darkstore QR Manager</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- Sticky Top Navigation -->
+  <header class="sticky-nav">
+    <div class="nav-title">Blinkit Darkstore</div>
+    <div class="nav-buttons">
+      <button class="nav-btn active" data-type="AISLE">Aisle</button>
+      <button class="nav-btn" data-type="FNV">FNV</button>
+      <button class="nav-btn" data-type="CR">CR</button>
+      <button class="nav-btn" data-type="FR">FR</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Breadcrumb Path -->
+    <div id="breadcrumb" class="breadcrumb">Select a storage zone above</div>
+
+    <!-- Dynamic Drill-down Content -->
+    <div id="selectionGrid" class="button-grid"></div>
+
+    <!-- Final QR Code Output Display -->
+    <div id="qrDisplay" class="qr-display hidden">
+      <div class="qr-header">
+        <h2 id="qrTitle"></h2>
+        <button onclick="window.print()" class="print-btn">Print Shelf QRs</button>
+      </div>
+      <div id="qrGrid" class="qr-grid"></div>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
