@@ -10,6 +10,102 @@ body {
   padding-top: 70px; /* Space for sticky header */
 }
 
+/* Make QR cards look clickable */
+.qr-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qr-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #f7c325;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75); /* Darker backdrop for focus */
+  backdrop-filter: blur(6px);       /* Soft blur on background elements */
+  display: flex;
+  justify-content: center;          /* Center horizontally */
+  align-items: center;              /* Center vertically */
+  z-index: 2000;
+  padding: 20px;
+}
+
+/* Modal Content Box for QR Focus */
+.qr-modal-content {
+  background: #ffffff;
+  padding: 32px 24px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  animation: zoomCenter 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.qr-modal-content .close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: #f1f5f9;
+  border: none;
+  color: #333;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-modal-content .close-btn:active {
+  background: #e2e8f0;
+}
+
+.modal-qr-card {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.modal-qr-card p {
+ font-size: 20px;
+  font-weight: 800;
+  color: #111;
+  letter-spacing: 0.5px;
+  margin-bottom: 20px;
+  word-break: break-all;
+}
+
+#modalQrCode img, #modalQrCode canvas {
+ margin: 0 auto;
+  padding: 12px;
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+/* Modal Popup Scale Animation */
+@keyframes popupScale {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* Sticky Top Navigation Bar */
 .sticky-nav {
   position: fixed;
@@ -80,6 +176,7 @@ body {
   color: #111;
   cursor: pointer;
   padding: 2px 6px;
+  border: 1px solid black;
   border-radius: 4px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -150,6 +247,10 @@ body {
 }
 
 .qr-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
   background: white;
   border: 1px solid #ccc;
   padding: 15px;

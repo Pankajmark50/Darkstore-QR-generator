@@ -91,9 +91,9 @@ function updateBreadcrumb() {
 
   // 1. Zone Link
   if (singleAisleZone && state.view === 'RACKS') {
-    breadcrumb.appendChild(createCrumbSpan(`Zone: ${state.zone}`, null, true));
+    breadcrumb.appendChild(createCrumbSpan(`Zone: ${state.aisle}`, null, true));
   } else {
-    breadcrumb.appendChild(createCrumbSpan(`Zone: ${state.zone}`, () => {
+    breadcrumb.appendChild(createCrumbSpan(`Zone: Aisle`, () => {
       if (singleAisleZone) {
         renderRacks();
       } else {
@@ -115,7 +115,7 @@ function updateBreadcrumb() {
   // 3. Rack Link
   if (state.rack) {
     breadcrumb.appendChild(createSeparator());
-    const rackText = `Rack ${String(state.rack).padStart(3, '0')}`;
+    const rackText = `${String(state.rack).padStart(3, '0')}`;
     
     if (state.view === 'SHELVES' || state.view === 'QRS') {
       const config = warehouseConfig[state.zone][state.aisle];
@@ -134,7 +134,7 @@ function updateBreadcrumb() {
   // 4. Shelf Link (Active View)
   if (state.shelf && state.view === 'QRS') {
     breadcrumb.appendChild(createSeparator());
-    const shelfText = `Shelf ${String(state.shelf).padStart(2, '0')}`;
+    const shelfText = `${String(state.shelf).padStart(2, '0')}`;
     breadcrumb.appendChild(createCrumbSpan(shelfText, null, true));
   }
 }
@@ -202,7 +202,7 @@ function renderRacks() {
     
     const btn = document.createElement('button');
     btn.className = 'select-btn';
-    btn.textContent = `Rack ${rackStr}`;
+    btn.textContent = `${rackStr}`;
     
     btn.onclick = () => {
       state.rack = r;
@@ -231,7 +231,7 @@ function renderShelves() {
     const shelfStr = String(s).padStart(2, '0');
     const btn = document.createElement('button');
     btn.className = 'select-btn';
-    btn.textContent = `Shelf ${shelfStr}`;
+    btn.textContent = `${shelfStr}`;
     btn.onclick = () => {
       state.shelf = s;
       renderShelfBinsQRs();
@@ -248,7 +248,7 @@ function renderRackQRs() {
 
   const rackStr = String(state.rack).padStart(3, '0');
   updateBreadcrumb();
-  qrTitle.textContent = `${state.aisle} - Rack ${rackStr} (All Shelves)`;
+  qrTitle.textContent = `${state.aisle} - ${rackStr} (All Shelves)`;
   qrGrid.innerHTML = '';
 
   const config = warehouseConfig[state.zone][state.aisle];
@@ -270,7 +270,7 @@ function renderShelfBinsQRs() {
   const shelfStr = String(state.shelf).padStart(2, '0');
   
   updateBreadcrumb();
-  qrTitle.textContent = `${state.aisle} - Rack ${rackStr} - Shelf ${shelfStr}`;
+  qrTitle.textContent = `${state.aisle} - ${rackStr} - ${shelfStr}`;
   qrGrid.innerHTML = '';
 
   const config = warehouseConfig[state.zone][state.aisle];
@@ -284,9 +284,37 @@ function renderShelfBinsQRs() {
 }
 
 // Helper to generate a QR element
+// function createQRCard(locString) {
+//   const card = document.createElement('div');
+//   card.className = 'qr-card';
+
+//   const label = document.createElement('p');
+//   label.textContent = locString;
+//   card.appendChild(label);
+
+//   const qrDiv = document.createElement('div');
+//   card.appendChild(qrDiv);
+
+//   qrGrid.appendChild(card);
+
+//   new QRCode(qrDiv, {
+//     text: locString,
+//     width: 128,
+//     height: 128
+//   });
+// }
+
+// DOM References for QR Lightbox Modal
+const qrModal = document.getElementById('qrModal');
+const closeQrModalBtn = document.getElementById('closeQrModalBtn');
+const modalQrLabel = document.getElementById('modalQrLabel');
+const modalQrCode = document.getElementById('modalQrCode');
+
+// Updated createQRCard with Click-to-Enlarge Event
 function createQRCard(locString) {
   const card = document.createElement('div');
   card.className = 'qr-card';
+  card.title = 'Click to enlarge';
 
   const label = document.createElement('p');
   label.textContent = locString;
@@ -302,7 +330,35 @@ function createQRCard(locString) {
     width: 128,
     height: 128
   });
+
+  // Open Lightbox Popup on Click
+  card.onclick = () => openQrModal(locString);
 }
+
+// Function to Open QR Popup Modal
+function openQrModal(locString) {
+  modalQrLabel.textContent = locString;
+  modalQrCode.innerHTML = ''; // Clear previous QR
+
+  // Generate larger QR code inside the popup
+  new QRCode(modalQrCode, {
+    text: locString,
+    width: 220,
+    height: 220
+  });
+
+  qrModal.classList.remove('hidden');
+}
+
+// Close Modal Event Handlers
+closeQrModalBtn.onclick = () => qrModal.classList.add('hidden');
+
+// Close when clicking on background backdrop
+qrModal.onclick = (e) => {
+  if (e.target === qrModal) {
+    qrModal.classList.add('hidden');
+  }
+};
 
 // Initial Run
 renderAisles();
