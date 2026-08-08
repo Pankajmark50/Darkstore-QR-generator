@@ -91,9 +91,9 @@ function updateBreadcrumb() {
 
   // 1. Zone Link
   if (singleAisleZone && state.view === 'RACKS') {
-    breadcrumb.appendChild(createCrumbSpan(`Zone: ${state.aisle}`, null, true));
+    breadcrumb.appendChild(createCrumbSpan(`Zone: ${state.zone}`, null, true));
   } else {
-    breadcrumb.appendChild(createCrumbSpan(`Zone: Aisle`, () => {
+    breadcrumb.appendChild(createCrumbSpan(`Zone: ${state.zone}`, () => {
       if (singleAisleZone) {
         renderRacks();
       } else {
