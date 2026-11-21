@@ -1,13 +1,14 @@
 {
-  "name": "Darkstore QR Generator",
-  "short_name": "QR Generator",
-  "start_url": "./index.html",
+  "name": "Darkstore QR Tool",
+  "short_name": "QR Tool",
+  "description": "Darkstore internal location QR tool.",
+  "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#111111",
-  "theme_color": "#f7c325",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/241/241528.png",
+      "src": "icons/darkstore_qr_icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }

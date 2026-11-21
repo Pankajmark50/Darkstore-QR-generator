@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F0 Bin Location QR Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --primary: #38bdf8;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .mic-btn {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      border: none;
+      background: var(--primary);
+      color: #0f172a;
+      font-size: 2rem;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    .mic-btn:active {
+      transform: scale(0.95);
+    }
+
+    .mic-btn.listening {
+      background: var(--danger);
+      color: #ffffff;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 0.95rem;
+      min-height: 22px;
+      margin-bottom: 10px;
+    }
+
+    .rules {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    button.btn {
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: none;
+      background: var(--primary);
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.18);
+      border: 1px solid var(--danger);
+      color: #fecaca;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .qr-card {
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .code-text {
+      font-family: "Courier New", monospace;
+      font-size: 1.45rem;
+      font-weight: 800;
+      background: #f1f5f9;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 2px solid #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Bin Location QR Generator</h1>
+    <p class="subtitle">Floor F0 • Speak or type Aisle, Bay, Shelf, Bin</p>
+
+    <div id="errorBox" class="error"></div>
+
+    <div class="panel">
+      <button id="micBtn" class="mic-btn" type="button" aria-label="Start voice input">🎙️</button>
+      <div id="statusText" class="status">Tap mic and say "one one one A" or "eleven five two B"</div>
+      <div class="rules">
+        Aisle: <b>01–14</b> • Bay: <b>001–027</b> • Shelf: <b>01–09</b> • Bin: <b>A–I</b>
+      </div>
+
+      <div class="input-row">
+        <input id="manualInput" type="text" placeholder="e.g. 1 1 1 A or 111A" />
+        <button class="btn" type="button" onclick="submitManual()">Make QR</button>
+      </div>
+    </div>
+
+    <div class="qr-card">
+      <div id="qrContainer"></div>
+      <div id="codeText" class="code-text">F0-A01-001-01-A</div>
+      <button class="btn" type="button" style="width: 100%;" onclick="downloadQR()">Download QR PNG</button>
+    </div>
+  </div>
+
+  <script>
+    // Explicit word-to-number map ("one" -> 1, "eleven" -> 11, etc.)
+    const wordToNumberMap = {
+      "twenty seven": 27, "twenty six": 26, "twenty five": 25,
+      "twenty four": 24, "twenty three": 23, "twenty two": 22, "twenty one": 21,
+      twenty: 20, nineteen: 19, eighteen: 18, seventeen: 17, sixteen: 16,
+      fifteen: 15, fourteen: 14, thirteen: 13, twelve: 12, eleven: 11,
+      ten: 10, nine: 9, eight: 8, seven: 7, six: 6,
+      five: 5, four: 4, for: 4, three: 3, two: 2, to: 2, too: 2, one: 1
+    };
+
+    const natoLetters = {
+      alpha: "A", alfa: "A",
+      bravo: "B",
+      charlie: "C",
+      delta: "D",
+      echo: "E",
+      foxtrot: "F",
+      golf: "G",
+      hotel: "H",
+      india: "I"
+    };
+
+    const fillerWords = new Set(["make", "create", "generate", "qr", "code", "of", "for", "bin", "location"]);
+
+    const qr = new QRCode(document.getElementById("qrContainer"), {
+      text: "F0-A01-001-01-A",
+      width: 210,
+      height: 210,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    function showError(message) {
+      const box = document.getElementById("errorBox");
+      box.textContent = message;
+      box.style.display = "block";
+    }
+
+    function clearError() {
+      document.getElementById("errorBox").style.display = "none";
+    }
+
+    function wordsToNumbers(raw) {
+      // Separate attached letters from digits (e.g. "111a" -> "111 a")
+      let text = raw.toLowerCase().replace(/([0-9])([a-z])/g, "$1 $2").replace(/[-,]/g, " ");
+
+      // Replace multi-word and single-word numbers with digits
+      for (const [word, num] of Object.entries(wordToNumberMap)) {
+        text = text.replace(new RegExp(`\\b${word}\\b`, "g"), String(num));
+      }
+      return text;
+    }
+
+    // Handles when speech API merges "one one one" into "111"
+    function extractThreeNumbers(numTokens) {
+      if (numTokens.length >= 3) {
+        return numTokens.slice(0, 3).map(Number);
+      }
+
+      // Case: Speech API turned "one one one" into a single 3-digit string "111"
+      if (numTokens.length === 1 && numTokens[0].length === 3) {
+        return numTokens[0].split("").map(Number);
+      }
+
+      // Case: Speech API turned "twelve one one" into "1211" (4 digits: 2-digit aisle + 1 + 1)
+      if (numTokens.length === 1 && numTokens[0].length === 4) {
+        const s = numTokens[0];
+        const firstTwo = Number(s.slice(0, 2));
+        if (firstTwo >= 10 && firstTwo <= 14) {
+          return [firstTwo, Number(s[2]), Number(s[3])];
+        }
+      }
+
+      // Case: Two tokens where one got merged, e.g. ["11", "11"] -> [11, 1, 1] or ["1", "11"] -> [1, 1, 1]
+      if (numTokens.length === 2) {
+        const [a, b] = numTokens;
+        if (b.length === 2 && Number(a) <= 14) {
+          return [Number(a), Number(b[0]), Number(b[1])];
+        }
+        if (a.length === 2 && Number(a) > 14) {
+          return [Number(a[0]), Number(a[1]), Number(b)];
+        }
+      }
+
+      return numTokens.map(Number);
+    }
+
+    function parseBinInput(raw) {
+      clearError();
+      const tokens = wordsToNumbers(raw)
+        .split(/\s+/)
+        .filter((t) => t && !fillerWords.has(t));
+
+      const rawNumTokens = [];
+      let letter = null;
+
+      for (const token of tokens) {
+        if (/^\d+$/.test(token)) {
+          rawNumTokens.push(token);
+        } else if (natoLetters[token]) {
+          letter = natoLetters[token];
+        } else if (/^[a-z]$/i.test(token)) {
+          letter = token.toUpperCase();
+        }
+      }
+
+      const nums = extractThreeNumbers(rawNumTokens);
+
+      if (nums.length < 3 || !letter) {
+        showError(`Heard "${raw}" → parsed [${nums.join(", ")}] & "${letter || "?"}". Need 3 numbers + 1 letter (A–I).`);
+        return;
+      }
+
+      const [aisle, bay, shelf] = nums;
+
+      if (aisle < 1 || aisle > 14) {
+        showError(`Aisle ${aisle} is out of range (must be 01–14).`);
+        return;
+      }
+      if (bay < 1 || bay > 27) {
+        showError(`Bay ${bay} is out of range (must be 001–027).`);
+        return;
+      }
+      if (shelf < 1 || shelf > 9) {
+        showError(`Shelf ${shelf} is out of range (must be 01–09).`);
+        return;
+      }
+      if (!/^[A-I]$/.test(letter)) {
+        showError(`Bin "${letter}" is out of range (must be A–I).`);
+        return;
+      }
+
+      const code = `F0-A${String(aisle).padStart(2, "0")}-${String(bay).padStart(3, "0")}-${String(shelf).padStart(2, "0")}-${letter}`;
+      document.getElementById("codeText").textContent = code;
+      qr.clear();
+      qr.makeCode(code);
+    }
+
+    function submitManual() {
+      const input = document.getElementById("manualInput");
+      if (input.value.trim()) {
+        parseBinInput(input.value.trim());
+        input.value = "";
+      }
+    }
+
+    function downloadQR() {
+      const canvas = document.querySelector("#qrContainer canvas");
+      if (!canvas) return;
+      const code = document.getElementById("codeText").textContent;
+      const link = document.createElement("a");
+      link.download = `${code}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const micBtn = document.getElementById("micBtn");
+    const statusText = document.getElementById("statusText");
+
+    if (!SpeechRecognition) {
+      statusText.textContent = "Speech recognition not supported here — use the text box below.";
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.interimResults = false;
+
+      micBtn.addEventListener("click", () => {
+        try {
+          recognition.start();
+          micBtn.classList.add("listening");
+          statusText.textContent = "Listening...";
+        } catch {
+          recognition.stop();
+        }
+      });
+
+      recognition.onresult = (event) => {
+        const spoken = event.results[0][0].transcript;
+        statusText.textContent = `Heard: "${spoken}"`;
+        parseBinInput(spoken);
+      };
+
+      recognition.onerror = (event) => {
+        statusText.textContent = `Mic issue (${event.error}) — try again or type below.`;
+      };
+
+      recognition.onend = () => {
+        micBtn.classList.remove("listening");
+      };
+    }
+  </script>
+</body>
+</html>

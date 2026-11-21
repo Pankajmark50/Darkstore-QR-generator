@@ -7,12 +7,15 @@
   <link rel="stylesheet" href="styles.css">
   <!-- PWA Manifest Link -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#f7c325">
+  <meta name="theme-color" content="#000000">
+  <!-- 3. Add Favicon (used for the browser tab) -->
+    <link rel="icon" type="image/png" href="icons/darkstore_qr_icon.png">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
    <!-- Register Service Worker -->
   <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
+    navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW Registered', reg))
+    .catch(err => console.error('SW Registration Failed', err));
   }
 </script>
 </head>
@@ -26,6 +29,7 @@
       <button class="nav-btn" data-type="FNV">FNV</button>
       <button class="nav-btn" data-type="CR">CR</button>
       <button class="nav-btn" data-type="FR">FR</button>
+      <a href="qr_bin.html"><button class="nav-btn">Test</button></a>
     </div>
   </header>
 
